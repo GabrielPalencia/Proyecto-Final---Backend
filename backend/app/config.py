@@ -8,9 +8,11 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_host: str = "0.0.0.0"
     app_port: int = 8000
-    cors_origins: List[str] = ["http://localhost:5173"]
+    cors_origins: List[str] = ["http://localhost:5173", "http://localhost:3000"]
     cache_ttl_seconds: int = 60
     
+    log_level: str = "INFO"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False
