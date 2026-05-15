@@ -1,0 +1,41 @@
+{
+  "fecha_entrenamiento": "2026-05-15T20:09:12.831524Z",
+  "target": "pm25_juanmina",
+  "split_date": "2023-02-21T01:00:00",
+  "n_train": 4886,
+  "n_test": 1223,
+  "hiperparametros": {
+    "n_estimators": 300,
+    "learning_rate": 0.009438267697083096,
+    "max_depth": 4,
+    "min_child_weight": 10,
+    "subsample": 0.606216823987958,
+    "colsample_bytree": 0.6984539682355769,
+    "reg_alpha": 0.0041701520260691806,
+    "reg_lambda": 0.0001496256093840287,
+    "gamma": 0.00033869188703939464,
+    "objective": "reg:squarederror",
+    "tree_method": "hist",
+    "random_state": 42,
+    "n_jobs": -1
+  },
+  "metricas_test": {
+    "MAE": 1.4563937653738852,
+    "RMSE": 2.461807341857223,
+    "R2": 0.5663726162695322,
+    "MAPE_%": 16.3312412013732
+  },
+  "ica_test": {
+    "coincidencia_categoria_pct": 93.41
+  },
+  "versiones": {
+    "python": "3.12.13",
+    "numpy": "2.0.2",
+    "pandas": "2.2.2",
+    "xgboost": "2.1.4",
+    "scikit-learn": "1.6.1",
+    "optuna": "4.8.0",
+    "shap": "0.51.0"
+  },
+  "random_state": 42
+}

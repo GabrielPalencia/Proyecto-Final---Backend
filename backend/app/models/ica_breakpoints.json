@@ -1,0 +1,50 @@
+[
+  {
+    "c_lo": 0.0,
+    "c_hi": 12.0,
+    "i_lo": 0,
+    "i_hi": 50,
+    "categoria": "Buena",
+    "color": "#00e400"
+  },
+  {
+    "c_lo": 12.1,
+    "c_hi": 35.4,
+    "i_lo": 51,
+    "i_hi": 100,
+    "categoria": "Moderada",
+    "color": "#ffff00"
+  },
+  {
+    "c_lo": 35.5,
+    "c_hi": 55.4,
+    "i_lo": 101,
+    "i_hi": 150,
+    "categoria": "Dañina para grupos sensibles",
+    "color": "#ff7e00"
+  },
+  {
+    "c_lo": 55.5,
+    "c_hi": 150.4,
+    "i_lo": 151,
+    "i_hi": 200,
+    "categoria": "Dañina a la salud",
+    "color": "#ff0000"
+  },
+  {
+    "c_lo": 150.5,
+    "c_hi": 250.4,
+    "i_lo": 201,
+    "i_hi": 300,
+    "categoria": "Muy dañina a la salud",
+    "color": "#8f3f97"
+  },
+  {
+    "c_lo": 250.5,
+    "c_hi": 500.4,
+    "i_lo": 301,
+    "i_hi": 500,
+    "categoria": "Peligrosa",
+    "color": "#7e0023"
+  }
+]
