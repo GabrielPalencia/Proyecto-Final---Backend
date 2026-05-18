@@ -13,6 +13,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.config import settings
 from app.routers import sensor, predictions
+from app.services.model import model_service
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: airwatch-bq-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SMART_CITIZEN_DEVICE_ID
+        value: 19595
+      - key: SMART_CITIZEN_BASE_URL
+        value: https://api.smartcitizen.me/v0
+      - key: APP_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://tu-app.vercel.app
+      - key: CACHE_TTL_SECONDS
+        value: 60
