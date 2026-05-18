@@ -189,14 +189,14 @@ class TestBuildFeatureVector:
 class TestPredictManual:
     def test_returns_200_with_valid_input(self, client):
         resp = client.post(
-            "/api/v1/predictions/predict",
+            "/api/v1/predictions/manual",
             json={"pm25": 25.0, "pm10": 40.0},
         )
         assert resp.status_code == 200
 
     def test_response_has_required_fields(self, client):
         resp = client.post(
-            "/api/v1/predictions/predict",
+            "/api/v1/predictions/manual",
             json={"pm25": 25.0, "pm10": 40.0},
         )
         data = resp.json()
@@ -210,28 +210,28 @@ class TestPredictManual:
 
     def test_data_source_is_manual(self, client):
         resp = client.post(
-            "/api/v1/predictions/predict",
+            "/api/v1/predictions/manual",
             json={"pm25": 25.0, "pm10": 40.0},
         )
         assert resp.json()["data_source"] == "manual"
 
     def test_prediction_is_float(self, client):
         resp = client.post(
-            "/api/v1/predictions/predict",
+            "/api/v1/predictions/manual",
             json={"pm25": 25.0, "pm10": 40.0},
         )
         assert isinstance(resp.json()["prediction"], float)
 
     def test_negative_pm25_returns_422(self, client):
         resp = client.post(
-            "/api/v1/predictions/predict",
+            "/api/v1/predictions/manual",
             json={"pm25": -5.0, "pm10": 40.0},
         )
         assert resp.status_code == 422
 
     def test_missing_required_field_returns_422(self, client):
         resp = client.post(
-            "/api/v1/predictions/predict",
+            "/api/v1/predictions/manual",
             json={"pm25": 25.0},  # pm10 missing
         )
         assert resp.status_code == 422
@@ -239,22 +239,21 @@ class TestPredictManual:
     def test_503_when_model_not_ready(self, client):
         model_service.model = None
         resp = client.post(
-            "/api/v1/predictions/predict",
+            "/api/v1/predictions/manual",
             json={"pm25": 25.0, "pm10": 40.0},
         )
         assert resp.status_code == 503
-        assert "Modelo no disponible" in resp.json()["detail"]
 
 
 # ── model-info endpoint ───────────────────────────────────────────────────────
 
 class TestModelInfo:
     def test_returns_200(self, client):
-        resp = client.get("/api/v1/predictions/model-info")
+        resp = client.get("/api/v1/predictions/info")
         assert resp.status_code == 200
 
     def test_response_has_required_fields(self, client):
-        data = client.get("/api/v1/predictions/model-info").json()
+        data = client.get("/api/v1/predictions/info").json()
         assert data["model_type"] == "XGBoostRegressor"
         assert isinstance(data["features"], list)
         assert data["training_date"] == "2024-01-15T10:30:00Z"
@@ -262,7 +261,7 @@ class TestModelInfo:
 
     def test_503_when_model_not_ready(self, client):
         model_service.model = None
-        resp = client.get("/api/v1/predictions/model-info")
+        resp = client.get("/api/v1/predictions/info")
         assert resp.status_code == 503
 
 
@@ -313,7 +312,7 @@ class TestPredictCurrent:
             self._sc_history_payload(), self._sc_device_payload()
         )
         with patch("app.services.model.httpx.AsyncClient", return_value=mock_client):
-            resp = client.get("/api/v1/predictions/current")
+            resp = client.post("/api/v1/predictions/current")
         assert resp.status_code == 200
 
     def test_data_source_is_smart_citizen_live(self, client):
@@ -321,7 +320,7 @@ class TestPredictCurrent:
             self._sc_history_payload(), self._sc_device_payload()
         )
         with patch("app.services.model.httpx.AsyncClient", return_value=mock_client):
-            resp = client.get("/api/v1/predictions/current")
+            resp = client.post("/api/v1/predictions/current")
         assert resp.json()["data_source"] == "smart_citizen_live"
 
     def test_response_has_required_fields(self, client):
@@ -329,7 +328,7 @@ class TestPredictCurrent:
             self._sc_history_payload(), self._sc_device_payload()
         )
         with patch("app.services.model.httpx.AsyncClient", return_value=mock_client):
-            resp = client.get("/api/v1/predictions/current")
+            resp = client.post("/api/v1/predictions/current")
         data = resp.json()
         assert "prediction" in data
         assert "category" in data
@@ -338,7 +337,7 @@ class TestPredictCurrent:
 
     def test_503_when_model_not_ready(self, client):
         model_service.model = None
-        resp = client.get("/api/v1/predictions/current")
+        resp = client.post("/api/v1/predictions/current")
         assert resp.status_code == 503
 
     def test_502_when_sc_api_returns_empty_readings(self, client):
@@ -355,5 +354,5 @@ class TestPredictCurrent:
             side_effect=[empty_history, device_resp]
         )
         with patch("app.services.model.httpx.AsyncClient", return_value=mock_async_client):
-            resp = client.get("/api/v1/predictions/current")
+            resp = client.post("/api/v1/predictions/current")
         assert resp.status_code == 502

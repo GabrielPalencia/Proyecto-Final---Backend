@@ -5,6 +5,7 @@ Punto de entrada de la aplicación FastAPI.
 
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.config import settings
 from app.routers import sensor, predictions
+from app.routers import status as status_router
 from app.services.model import model_service
 
 
@@ -32,12 +34,24 @@ logger = logging.getLogger("main")
 # ---------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("🚀 AirWatch Barranquilla iniciando...")
-    logger.info("📡 Dispositivo Smart Citizen: %s", settings.smart_citizen_device_id)
-    logger.info("🌐 Smart Citizen API: %s", settings.smart_citizen_base_url)
+    # Guardar tiempo de inicio para calcular uptime en /status
+    status_router.app_start_time = datetime.now(timezone.utc)
+
+    logger.info("AirWatch Barranquilla iniciando...")
+    logger.info("Dispositivo Smart Citizen: %s", settings.smart_citizen_device_id)
+    logger.info("Smart Citizen API: %s", settings.smart_citizen_base_url)
+
+    if model_service.is_ready:
+        logger.info(
+            "Modelo cargado: %s | %d features",
+            model_service.metadata.get("model_type"),
+            len(model_service.feature_cols),
+        )
+    else:
+        logger.warning("Modelo NO cargado — coloca los artifacts en app/models/")
 
     yield
-    logger.info("🛑 API detenida.")
+    logger.info("API detenida.")
 
 
 # ---------------------------------------------------------------------------
@@ -114,6 +128,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 # ---------------------------------------------------------------------------
 app.include_router(sensor.router, prefix="/api/v1/sensor")
 app.include_router(predictions.router, prefix="/api/v1/predictions")
+app.include_router(status_router.router, prefix="/api/v1")
 
 
 # ---------------------------------------------------------------------------
