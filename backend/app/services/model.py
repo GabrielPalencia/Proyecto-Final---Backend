@@ -160,10 +160,14 @@ class ModelService:
         ]
         return np.array(values, dtype=float).reshape(1, -1)
 
-    def predict_manual(self, input_data: dict) -> dict:
+    def predict_manual(
+        self,
+        input_data: dict,
+        pm25_series: pd.Series | None = None,
+    ) -> dict:
         dt = datetime.now(timezone.utc)
         current_sensors = {k: v for k, v in input_data.items() if v is not None}
-        X = self._build_feature_vector(dt, pm25_series=None, current_sensors=current_sensors)
+        X = self._build_feature_vector(dt, pm25_series=pm25_series, current_sensors=current_sensors)
         pm25_pred = float(self.model.predict(X)[0])
         category, color = self._aqi_category(pm25_pred)
         return {
@@ -175,6 +179,33 @@ class ModelService:
             "model_version": self.metadata.get("fecha_entrenamiento", "unknown"),
             "data_source": "manual",
         }
+
+    async def fetch_pm25_history(self, device_id: str, base_url: str) -> pd.Series | None:
+        """Fetch 200h of PM2.5 history from Smart Citizen API. Returns None on failure."""
+        try:
+            now = datetime.now(timezone.utc)
+            from_dt = now - timedelta(hours=200)
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.get(
+                    f"{base_url}/devices/{device_id}/readings",
+                    params={
+                        "sensor_id": 87,
+                        "rollup": "1h",
+                        "from": from_dt.isoformat(),
+                        "to": now.isoformat(),
+                        "function": "avg",
+                    },
+                )
+                resp.raise_for_status()
+                readings = resp.json().get("readings", [])
+            if not readings:
+                return None
+            timestamps = pd.to_datetime([r[0] for r in readings], utc=True)
+            values = [float(r[1]) if r[1] is not None else np.nan for r in readings]
+            return pd.Series(values, index=timestamps).sort_index()
+        except Exception as exc:
+            logger.warning("Could not fetch PM2.5 history: %s", exc)
+            return None
 
     async def predict_current(self, device_id: str, base_url: str) -> dict:
         now = datetime.now(timezone.utc)

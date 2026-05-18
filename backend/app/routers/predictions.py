@@ -22,7 +22,11 @@ def _require_model() -> None:
 @router.post("/predict", response_model=PredictionOutput)
 async def predict_manual(body: PredictionInput):
     _require_model()
-    result = model_service.predict_manual(body.model_dump())
+    pm25_series = await model_service.fetch_pm25_history(
+        settings.smart_citizen_device_id,
+        settings.smart_citizen_base_url,
+    )
+    result = model_service.predict_manual(body.model_dump(), pm25_series=pm25_series)
     return PredictionOutput(**result)
 
 
