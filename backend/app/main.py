@@ -12,7 +12,8 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 from app.config import settings
-from app.routers import sensor
+from app.routers import sensor, predictions
+
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -33,6 +34,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 AirWatch Barranquilla iniciando...")
     logger.info("📡 Dispositivo Smart Citizen: %s", settings.smart_citizen_device_id)
     logger.info("🌐 Smart Citizen API: %s", settings.smart_citizen_base_url)
+
     yield
     logger.info("🛑 API detenida.")
 
@@ -110,10 +112,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 # Routers
 # ---------------------------------------------------------------------------
 app.include_router(sensor.router, prefix="/api/v1/sensor")
-
-# predictions router se añade en BE-03:
-# from app.routers import predictions
-# app.include_router(predictions.router, prefix="/api/v1/predictions")
+app.include_router(predictions.router, prefix="/api/v1/predictions")
 
 
 # ---------------------------------------------------------------------------
