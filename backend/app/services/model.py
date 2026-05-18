@@ -117,10 +117,6 @@ class ModelService:
                 if pm25_series is not None and len(pm25_series) >= lag_h:
                     return float(pm25_series.iloc[-lag_h])
                 return np.nan
-            # Exogenous: only lag_1h maps to current sensor reading.
-            # Match exactly or as a leading component to avoid "pm1" matching
-            # "pm10_lag_1h": sensor_prefix "pm10" != "pm1" and doesn't start
-            # with "pm1_".
             if lag_h == 1:
                 sensor_prefix = feat.split("_lag_")[0]
                 for key, val in current_sensors.items():
@@ -130,8 +126,8 @@ class ModelService:
 
         # ── Rolling features: *_rollW_stat ───────────────────────────────────
         if "_roll" in feat and feat.startswith(target_col):
-            roll_part = feat.split("_roll")[1]          # e.g. "3_mean"
-            w_str, stat = roll_part.split("_", 1)       # "3", "mean"
+            roll_part = feat.split("_roll")[1]
+            w_str, stat = roll_part.split("_", 1)
             w = int(w_str)
             if pm25_series is not None and len(pm25_series) >= w:
                 window = pm25_series.iloc[-w:]
@@ -160,26 +156,6 @@ class ModelService:
         ]
         return np.array(values, dtype=float).reshape(1, -1)
 
-    def predict_manual(
-        self,
-        input_data: dict,
-        pm25_series: pd.Series | None = None,
-    ) -> dict:
-        dt = datetime.now(timezone.utc)
-        current_sensors = {k: v for k, v in input_data.items() if v is not None}
-        X = self._build_feature_vector(dt, pm25_series=pm25_series, current_sensors=current_sensors)
-        pm25_pred = float(self.model.predict(X)[0])
-        category, color = self._aqi_category(pm25_pred)
-        return {
-            "prediction": pm25_pred,
-            "category": category,
-            "aqi_color": color,
-            "timestamp": dt,
-            "input_features": input_data,
-            "model_version": self.metadata.get("fecha_entrenamiento", "unknown"),
-            "data_source": "manual",
-        }
-
     async def fetch_pm25_history(self, device_id: str, base_url: str) -> pd.Series | None:
         """Fetch 200h of PM2.5 history from Smart Citizen API. Returns None on failure."""
         try:
@@ -206,6 +182,26 @@ class ModelService:
         except Exception as exc:
             logger.warning("Could not fetch PM2.5 history: %s", exc)
             return None
+
+    def predict_manual(
+        self,
+        input_data: dict,
+        pm25_series: pd.Series | None = None,
+    ) -> dict:
+        dt = datetime.now(timezone.utc)
+        current_sensors = {k: v for k, v in input_data.items() if v is not None}
+        X = self._build_feature_vector(dt, pm25_series=pm25_series, current_sensors=current_sensors)
+        pm25_pred = float(self.model.predict(X)[0])
+        category, color = self._aqi_category(pm25_pred)
+        return {
+            "prediction": pm25_pred,
+            "category": category,
+            "aqi_color": color,
+            "timestamp": dt,
+            "input_features": input_data,
+            "model_version": self.metadata.get("fecha_entrenamiento", "unknown"),
+            "data_source": "manual",
+        }
 
     async def predict_current(self, device_id: str, base_url: str) -> dict:
         now = datetime.now(timezone.utc)
