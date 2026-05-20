@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     app_port: int = 8000
     cors_origins: List[str] = ["http://localhost:5173", "http://localhost:3000"]
     cache_ttl_seconds: int = 60
-    
     log_level: str = "INFO"
+    max_data_age_hours: int = 6
 
     model_config = SettingsConfigDict(
         env_file=".env",

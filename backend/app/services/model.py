@@ -8,6 +8,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from fastapi import HTTPException
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -236,6 +237,17 @@ class ModelService:
         timestamps = pd.to_datetime([r[0] for r in readings], utc=True)
         values = [float(r[1]) if r[1] is not None else np.nan for r in readings]
         pm25_series = pd.Series(values, index=timestamps).sort_index()
+
+        # Verificar que los datos sean recientes
+        last_ts = pm25_series.index[-1]
+        age_hours = (now - last_ts).total_seconds() / 3600
+        if age_hours > settings.max_data_age_hours:
+            raise HTTPException(
+                502,
+                f"Datos del sensor desactualizados: última lectura hace "
+                f"{int(age_hours)}h (máximo permitido: {settings.max_data_age_hours}h). "
+                f"Verificar que el sensor físico esté publicando.",
+            )
 
         sensor_name_map = {
             "Temperature": "temperature",
