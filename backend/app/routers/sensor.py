@@ -15,6 +15,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas.sensor import DeviceStatus, HistoricalResponse, SensorReading
 from app.services.smart_citizen import smart_citizen_service
+from app.services.supabase_db import build_reading_from_device, insert_sensor_reading
 
 logger = logging.getLogger("sensor_router")
 
@@ -37,7 +38,16 @@ router = APIRouter(tags=["Sensor"])
 )
 async def get_current_readings() -> DeviceStatus:
     raw = await smart_citizen_service.get_device_current_readings()
-    return smart_citizen_service.parse_current_readings(raw)
+    device = smart_citizen_service.parse_current_readings(raw)
+
+    try:
+        row = build_reading_from_device(device)
+        if row is not None:
+            insert_sensor_reading(row)
+    except Exception as exc:
+        logger.warning("Persistencia de lectura falló: %s", exc)
+
+    return device
 
 
 # ---------------------------------------------------------------------------
