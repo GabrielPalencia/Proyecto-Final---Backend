@@ -190,7 +190,14 @@ class ModelService:
         pm25_series: pd.Series | None = None,
     ) -> dict:
         dt = datetime.now(timezone.utc)
-        current_sensors = {k: v for k, v in input_data.items() if v is not None}
+        pm25_manual = input_data.get("pm25")
+        if pm25_manual is not None:
+            new_point = pd.Series([float(pm25_manual)], index=pd.DatetimeIndex([dt], tz="UTC"))
+            if pm25_series is None or len(pm25_series) == 0:
+                pm25_series = new_point
+            else:
+                pm25_series = pd.concat([pm25_series, new_point]).sort_index()
+        current_sensors = {k: v for k, v in input_data.items() if v is not None and k != "pm25"}
         X = self._build_feature_vector(dt, pm25_series=pm25_series, current_sensors=current_sensors)
         pm25_pred = float(self.model.predict(X)[0])
         category, color = self._aqi_category(pm25_pred)
