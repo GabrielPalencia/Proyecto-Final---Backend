@@ -59,10 +59,14 @@ class SmartCitizenService:
     """
 
     def __init__(self) -> None:
-        self.device_id = settings.smart_citizen_device_id
         self.base_url = settings.smart_citizen_base_url
         # httpx.AsyncClient se crea por request (no como atributo de instancia)
         # para evitar problemas con el event loop en FastAPI.
+
+    @property
+    def device_id(self) -> str:
+        """Lee device_id del .env cada vez (permite cambios sin reiniciar)."""
+        return settings.smart_citizen_device_id
 
     # ------------------------------------------------------------------
     # Helpers internos
