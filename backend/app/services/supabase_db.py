@@ -15,9 +15,15 @@ _client: Optional[Client] = None
 
 SENSOR_ID_TO_COLUMN: dict[int, str] = {
     10: "battery",
+    55: "temperature",
+    56: "humidity",
+    79: "temperature",
+    80: "humidity",
     87: "pm_25",
     88: "pm_10",
     89: "pm_1",
+    158: "temperature",
+    159: "humidity",
     165: "pn_03",
     166: "pn_05",
     167: "pn_1",
@@ -29,6 +35,10 @@ SENSOR_ID_TO_COLUMN: dict[int, str] = {
 NORMALIZED_NAME_TO_COLUMN: dict[str, str] = {
     "battery": "battery",
     "batterysck": "battery",
+    "temperature": "temperature",
+    "temp": "temperature",
+    "humidity": "humidity",
+    "hum": "humidity",
     "pm1": "pm_1",
     "pm25": "pm_25",
     "pm10": "pm_10",
@@ -39,6 +49,11 @@ NORMALIZED_NAME_TO_COLUMN: dict[str, str] = {
     "pn5": "pn_5",
     "pn10": "pn_10",
 }
+
+NAME_SUBSTRING_TO_COLUMN: list[tuple[str, str]] = [
+    ("temperature", "temperature"),
+    ("humidity", "humidity"),
+]
 
 
 def _normalize_sensor_name(name: str) -> str:
@@ -75,7 +90,13 @@ def build_reading_from_device(device: DeviceStatus) -> Optional[dict]:
     for s in device.sensors:
         col = SENSOR_ID_TO_COLUMN.get(s.sensor_id)
         if col is None:
-            col = NORMALIZED_NAME_TO_COLUMN.get(_normalize_sensor_name(s.name))
+            normalized = _normalize_sensor_name(s.name)
+            col = NORMALIZED_NAME_TO_COLUMN.get(normalized)
+            if col is None:
+                for needle, target in NAME_SUBSTRING_TO_COLUMN:
+                    if needle in normalized:
+                        col = target
+                        break
         if col is None or s.value is None:
             continue
         row[col] = int(s.value) if col == "battery" else s.value
