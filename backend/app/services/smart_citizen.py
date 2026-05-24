@@ -59,14 +59,10 @@ class SmartCitizenService:
     """
 
     def __init__(self) -> None:
+        self.device_id = settings.smart_citizen_device_id
         self.base_url = settings.smart_citizen_base_url
         # httpx.AsyncClient se crea por request (no como atributo de instancia)
         # para evitar problemas con el event loop en FastAPI.
-
-    @property
-    def device_id(self) -> str:
-        """Lee device_id del .env cada vez (permite cambios sin reiniciar)."""
-        return settings.smart_citizen_device_id
 
     # ------------------------------------------------------------------
     # Helpers internos
@@ -171,19 +167,25 @@ class SmartCitizenService:
 
         sensors = []
         for s in raw_sensors:
-            raw_value = s.get("value")
-            raw_prev = s.get("prev_value")
-            sensors.append(
-                SensorReading(
-                    sensor_id=s["id"],
-                    name=s.get("name", ""),
-                    description=s.get("description", ""),
-                    unit=s.get("unit", ""),
-                    value=float(raw_value) if raw_value is not None else None,
-                    prev_value=float(raw_prev) if raw_prev is not None else None,
-                    recorded_at=recorded_at,
+            try:
+                if "id" not in s:
+                    logger.warning("Sensor sin 'id': %s", s.get("name", "unknown"))
+                    continue
+                raw_value = s.get("value")
+                raw_prev = s.get("prev_value")
+                sensors.append(
+                    SensorReading(
+                        sensor_id=s["id"],
+                        name=s.get("name", ""),
+                        description=s.get("description", ""),
+                        unit=s.get("unit", ""),
+                        value=float(raw_value) if raw_value is not None else None,
+                        prev_value=float(raw_prev) if raw_prev is not None else None,
+                        recorded_at=recorded_at,
+                    )
                 )
-            )
+            except (ValueError, TypeError) as e:
+                logger.error("Error parsing sensor %s: %s", s.get("id"), e)
 
         raw_location = data_block.get("location") or {}
         location = DeviceLocation(
