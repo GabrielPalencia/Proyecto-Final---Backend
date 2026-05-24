@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     max_data_age_hours: int = 6
 
+    supabase_url: str
+    supabase_service_role_key: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False
